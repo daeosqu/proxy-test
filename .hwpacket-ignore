@@ -1,0 +1,33 @@
+{
+  "adventure_getActiveData": null,
+  "titanGetSummoningCircle": null,
+  "tutorialGetInfo": null,
+  "getTime": null,
+  "chatsGetAll": null,
+  "newYearGetInfo": null,
+  "billingGetAll": null,
+  "questGetEvents": null,
+  "titanArenaGetChestReward": {
+    "ident": "titanArenaGetChestReward",
+    "result": {
+      "response": []
+    }
+  },
+  "questGetAll": null,
+  "campaignStoryGetList": null,
+  "missionGetAll": null,
+  "billingGetLast": null,
+  "freebieHaveGroup": {
+    "ident": "freebieHaveGroup",
+    "result": {
+      "response": true
+    }
+  },
+  "pet_getChest": null,
+  "missionGetReplace": {
+    "ident": "missionGetReplace",
+    "result": {
+      "response": null
+    }
+  }
+}
