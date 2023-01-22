@@ -1,6 +1,6 @@
 from tinydb import TinyDB, Query
-from hw_logging import get_logger
-from hw_packet import Packet, Monitor
+from hwcapture.logging import get_logger
+from hwcapture.packet import Packet, Monitor, BadPacket
 
 logger = get_logger('DEBUG')
 
@@ -13,7 +13,10 @@ def main():
     monitor = Monitor(only_calls=only_calls)
 
     for i, raw in enumerate(db.all()):
-        monitor.process(Packet(raw, i))
+        try:
+            monitor.process(Packet(raw, i))
+        except BadPacket:
+            pass
 
     monitor.report_debug()
 

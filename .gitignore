@@ -1,2 +1,4 @@
 .hw-capture.json
 .hwpacket-ignore.auto
+
+__pycache__/

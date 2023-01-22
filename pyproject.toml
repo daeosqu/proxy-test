@@ -1,16 +1,18 @@
 [tool.poetry]
-name = "proxy-test"
+name = "hwcapture"
 version = "0.1.0"
 description = ""
-authors = ["Daisuke Arai"]
+authors = ["Daisuke Arai <daisuke.qu@gmail.com>"]
 readme = "README.md"
+packages = [{include = "hwcapture", from = "src"}]
 
 [tool.poetry.dependencies]
 python = "^3.10"
 build = "^0.10.0"
 tinydb = "^4.7.1"
 loguru = "^0.6.0"
-
+urwid = "^2.1.2"
+mitmproxy = "^9.0.1"
 
 [tool.poetry.group.dev.dependencies]
 ipdb = "^0.13.11"

@@ -1,7 +1,7 @@
 import re
 import json
 from collections import UserDict, UserList
-from hw_logging import get_logger
+from hwcapture.logging import get_logger
 
 
 MYSERVER = 145
@@ -14,6 +14,9 @@ AUTO_IGNORE_PATTERNS = {}
 class NULL:
     pass
 
+
+class BadPacket(ValueError):
+    pass
 
 
 def omit_string(text, maxlen=None):
@@ -39,12 +42,12 @@ class Packet:
         self.packet_id = packet_id
         self.packet = packet
 
+    def get_event_generator(self):
+        return EventGenerator(self)
+
     @property
     def names(self):
         return [call['name'] for call in self.packet['request']['calls']]
-
-    def __getitem__(self, name):
-        return self.packet[name]
 
     @property
     def idname(self):
@@ -52,6 +55,9 @@ class Packet:
             return '#?'
         else:
             return '#' + str(self.packet_id)
+
+    def __getitem__(self, name):
+        return self.packet[name]
 
     def __str__(self):
         # eg. "#10 ['arenaFindEnemies']"
@@ -105,7 +111,11 @@ class EventGenerator:
     def __init__(self, packet):
         self.packet = packet
         self.calls = packet['request']['calls']
-        self.results = packet['response']['results']
+        try: # DEBUG
+            self.results = packet['response']['results']
+        except KeyError:
+            __import__("ipdb").set_trace()
+
         self.index = 0
 
     def __iter__(self):
@@ -234,7 +244,7 @@ class EventHandler:
                 window = item["params"]["windowName"]
                 print(f'Open window "{window}"')
                 return
-        logger.warning("Unexpected packet: No client.window.open data in stashCleient call")
+        raise BadPacket("No client.window.open data in stashCleient call")
 
     def _default(self, event, omit=NULL, omit_result=NULL):
         dump = event.dump(no_header=True)
@@ -250,11 +260,13 @@ class EventHandler:
             print(str(event) + ": ", end="")
             function(event)
             self.need_blank = True
+            return True
         else:
             if self.need_blank:
                 self.need_blank = False
                 print()
             self._default(event)
+            return False
 
 
 class Monitor:
@@ -278,9 +290,10 @@ class Monitor:
             return []
 
     def process(self, packet, ignore_calls=None):
-        for event in EventGenerator(packet):
+        all_accepted = True
+
+        for event in packet.get_event_generator():
             accept = None
-            reason = None
 
             if self.filter:
                 accept = self.filter(event)
@@ -306,13 +319,17 @@ class Monitor:
 
             if not accept:
                 logger.debug(f'SKIP {event} (filtered by "{reason}")')
+                all_accepted = False
                 continue
 
             try:
-                self.handler(event)
+                if not self.handler(event):
+                    all_accepted = False
             except Exception as exc:
                 print(event)
                 raise
+
+        return all_accepted
 
     def report_debug(self):
         num = len(AUTO_IGNORE_PATTERNS.keys())

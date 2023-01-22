@@ -12,7 +12,11 @@ import re
 from mitmproxy.http import Request, Response, Message
 from tinydb import TinyDB, Query
 
-from hw_packet import Packet, Monitor
+from hwcapture.packet import Packet, Monitor, BadPacket
+from hwcapture.logging import get_logger
+
+
+logger = get_logger('DEBUG')
 
 
 def omit_string(text, maxlen=512):
@@ -191,8 +195,24 @@ class HWCapture:
                     fh.write('\n')
 
                 packet_data = self.convert_to_packet_data(flow)
-                self.db.insert(packet_data)
-                self.monitor.process(Packet(packet_data))
+
+                packet = Packet(packet_data)
+                write_log = False
+
+                try:
+                    if not self.monitor.process(packet):
+                        write_log = True
+                except BadPacket:
+                    write_log = True
+
+                if write_log:
+                    print('### writelog')
+                    dump = json.dumps(packet.packet)
+                    if len(dump) > 8192:
+                        names = [event.name for event in packet.get_event_generator()]
+                        logger.warning(f'Skip write large packet ({len(dump)} > 8192): {names}')
+                    else:
+                        self.db.insert(packet_data)
 
         # text = omit_string(text)
         # print(f"Response: {text}")
